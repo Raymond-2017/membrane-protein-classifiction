@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# @Time : 2020/4/20 14:44
-# @Author : zdqzyx
+# @Time : 2021/8/4 17:08
+# @Author : Raymond
 # @File : textcnn.py
 # @Software: PyCharm
 
@@ -10,22 +10,32 @@ from tensorflow.keras import Model
 
 
 class KmerTextCNN(Model):
-    '''
-   :param maxlen: 文本最大长度
-   :param max_features: 词典大小
-   :param embedding_dims: embedding维度大小
-   :param kernel_sizes: 滑动卷积窗口大小的list, eg: [1,2,3]
-   :param kernel_regularizer: eg: tf.keras.regularizers.l2(0.001)
-   :param class_num: 类别个数。8种膜蛋白。 注意：一定要填对，不然会训练中会出现loss为NaN的情况!
-   :param last_activation: 最后一层的激活函数
-   :param pre_avg_window: 预先（第一层）所作平均池化的窗口长度
-    '''
+    """Textcnn-based model
+
+    Define the structure of the textcnn-based model.
+
+    Attributes:
+        class_num: The number of classes in the classification problem.
+        maxlen: The maximum input length of the input sequence.
+        embedding_dims: Integer. Dimension of the dense embedding.
+        kernel_sizes: list, eg: [1,2,3]. The window size of 3 conv1d layers
+        in the TextCNN component.
+        embedded_input: Truth value. True, if the input has already been
+        embedded into a feature space default：False.
+        kmer: Integer. The window size of the very first average
+        pooling layer.
+        prior_avgpool: AveragePooling1D。The 1D maxpooling layer of
+        the downsampling component in the model.
+        conv1s: List. The conv1d layers that comprise the TextCNN component
+        in the model.
+        maxpools: List. The maxpooling layers in the TextCNN component.
+    """
 
     def __init__(self,
-                 maxlen,
-                 max_features,
-                 embedding_dims,
                  class_num,
+                 maxlen,
+                 input_dim,
+                 embedding_dims,
                  conv1d_filters,
                  kernel_sizes=[1, 2, 3],
                  kernel_regularizer=None,
@@ -41,7 +51,7 @@ class KmerTextCNN(Model):
         self.embedded_input = embedded_input
         self.kmer = pre_avg_window
         if not self.embedded_input:
-            self.embedding = Embedding(input_dim=max_features, output_dim=embedding_dims, input_length=maxlen)
+            self.embedding = Embedding(input_dim=input_dim, output_dim=embedding_dims, input_length=maxlen)
 
         # ============ text CNN部分的定义 =============
         # 在将embedding层输出送入TextCNN之前，增加一个AveragePooling1D层，该层按照kmer长度的窗口做一维平均池化。
@@ -86,18 +96,12 @@ class KmerTextCNN(Model):
         output = self.classifier(x)
         return output
 
-    '''
-    如果需要使用到其他Layer结构或者Sequential结构，需要在__init__()函数里赋值
-    在model没有fit前，想调用summary函数时显示模型各层shape时，则需要自定义一个函数去build下模型，类似下面代码中的build_graph函数
-    summary()显示shape顺序，是按照__init__()里layer赋值的顺序
-    ————————————————
-    版权声明：本文为CSDN博主「布鲁克泰勒」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
-    原文链接：https://blog.csdn.net/sinat_18127633/article/details/105860790
-    '''
-
     def build_graph(self, input_shape):
-        '''自定义函数，在调用model.summary()之前调用
-        '''
+        """Call before running model.summary()
+
+        Call this function before running model.summary(), so that model.summary()
+        can work when model.fit() has not been run.
+        """
         input_shape_nobatch = input_shape[1:]
         self.build(input_shape)
         inputs = tf.keras.Input(shape=input_shape_nobatch)
