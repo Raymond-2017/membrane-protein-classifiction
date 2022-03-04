@@ -20,7 +20,6 @@ def setup_seed(seed):
 
     Args:
         seed: An integer as a random seed.
-
     Returns:
         None
     """
@@ -39,7 +38,7 @@ tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=config))
 
 from tensorflow.keras.callbacks import ReduceLROnPlateau
 from tensorflow.keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
-from text_cnn import KmerTextCNN
+from bltcnn import BLTCNN
 
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
@@ -50,6 +49,17 @@ import seaborn as sns
 
 
 def checkout_dir(dir_path, do_delete=False):
+    """Check out directory
+
+    Check out if a directory exists; if it does not exist, create it.
+
+    Args:
+        dir_path: String. The path of a query directory.
+        do_delete: True: Clear up the directory if it exists. False: Leave the
+        existent directory alone.
+    Returns:
+        None
+    """
     import shutil
     if do_delete and os.path.exists(dir_path):
         shutil.rmtree(dir_path)
@@ -60,32 +70,32 @@ def checkout_dir(dir_path, do_delete=False):
 class ModelHepler:
     """Model constructing helper
 
-        Help contruct a model. It defines and manages a series of call-back functions.
+    Help contruct a model. It defines and manages a series of call-back functions.
 
-        Attributes:
-            class_num: The number of classes in the classification problem.
-            maxlen: The maximum input length of the input sequence.
-            input_dim: Integer. Size of the vocabulary. When embedded_input=True,
-            it would be ignored.
-            embedding_dims: Integer. Dimension of the dense embedding. When
-            embedded_input=True, it would be ignored.
-            epochs: Integer. Training epochs.
-            batch_size: Integer. the size of every batch when training the model.
-            pre_avg_window: Integer. The window size of the very first average
-            pooling layer.
-            lstm_units: Integer. The number of neurons in the hidden layer of the
-            LSTM block.
-            conv1d_filters: Integer. The number of filters in each filter size.
-            callback_list: List of `keras.callbacks.Callback` instances.
-            List of callbacks to apply during training.
-            embedded_input: Truth value. True, if the input has already been
-            embedded into a feature space default：False.
+    Attributes:
+        class_num: The number of classes in the classification problem.
+        maxlen: The maximum input length of the input sequence.
+        input_dim: Integer. Size of the vocabulary. When embedded_input=True,
+        it would be ignored.
+        embedding_dims: Integer. Dimension of the dense embedding. When
+        embedded_input=True, it would be ignored.
+        epochs: Integer. Training epochs.
+        batch_size: Integer. the size of every batch when training the model.
+        pre_avg_window: Integer. The window size of the very first average
+        pooling layer.
+        lstm_units: Integer. The number of neurons in the hidden layer of the
+        LSTM block.
+        conv1d_filters: Integer. The number of filters in each filter size.
+        callback_list: List of `keras.callbacks.Callback` instances.
+        List of callbacks to apply during training.
+        embedded_input: Truth value. True, if the input has already been
+        embedded into a feature space default：False.
     """
     def __init__(self, class_num, maxlen, input_dim, embedding_dims, epochs, batch_size, embedded_input,
                  pre_avg_window, lstm_units, conv1d_filters):
         """Model constructing helper
 
-            Help contruct a model. It defines and manages a series of call-back functions.
+            Help construct a model. It defines and manages a series of call-back functions.
 
             Args:
                 class_num: The number of classes in the classification problem.
@@ -123,19 +133,19 @@ class ModelHepler:
     def create_model(self):
         """Create and configure a BLTCNN model
 
-            Create a BLTCNN model and configure its optimizer.
+        Create a BLTCNN model and configure its optimizer.
         """
-        model = KmerTextCNN(maxlen=self.maxlen,
-                            input_dim=self.max_features,
-                            embedding_dims=self.embedding_dims,
-                            class_num=self.class_num,
-                            lstm_units=self.lstm_units,
-                            conv1d_filters=self.conv1d_filters,
-                            kernel_sizes=kernel_sizes,
-                            kernel_regularizer=None,
-                            last_activation='softmax',
-                            embedded_input=self.embedded_input,
-                            pre_avg_window=self.pre_avg_window)
+        model = BLTCNN(maxlen=self.maxlen,
+                       input_dim=self.max_features,
+                       embedding_dims=self.embedding_dims,
+                       class_num=self.class_num,
+                       lstm_units=self.lstm_units,
+                       conv1d_filters=self.conv1d_filters,
+                       kernel_sizes=kernel_sizes,
+                       kernel_regularizer=None,
+                       last_activation='softmax',
+                       embedded_input=self.embedded_input,
+                       pre_avg_window=self.pre_avg_window)
         model.compile(
             # optimizer='adam',
             optimizer=tf.keras.optimizers.Adam(),

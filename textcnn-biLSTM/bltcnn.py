@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Time : 2021/8/4 17:08
 # @Author : Raymond
-# @File : text_cnn.py
+# @File : bltcnn.py
 # @Software: PyCharm
 
 import tensorflow as tf
@@ -10,26 +10,26 @@ from tensorflow.keras.layers import Embedding, Conv1D, AveragePooling1D, Dense, 
 from tensorflow.keras import Model
 
 
-class KmerTextCNN(Model):
+class BLTCNN(Model):
     """BLTCNN model
 
-        Define the structure of the BLTCNN model.
+    Define the structure of the BLTCNN model.
 
-        Attributes:
-            class_num: The number of classes in the classification problem.
-            maxlen: The maximum input length of the input sequence.
-            embedding_dims: Integer. Dimension of the dense embedding.
-            kernel_sizes: list, eg: [1,2,3]. The window size of 3 conv1d layers
-            in the TextCNN component.
-            embedded_input: Truth value. True, if the input has already been
-            embedded into a feature space default：False.
-            kmer: Integer. The window size of the very first average
-            pooling layer.
-            prior_avgpool: AveragePooling1D。The 1D maxpooling layer of
-            the downsampling component in the model.
-            conv1s: List. The conv1d layers that comprise the TextCNN component
-            in the model.
-            maxpools: List. The maxpooling layers in the TextCNN component.
+    Attributes:
+        class_num: The number of classes in the classification problem.
+        maxlen: The maximum input length of the input sequence.
+        embedding_dims: Integer. Dimension of the dense embedding.
+        kernel_sizes: list, eg: [1,2,3]. The window size of 3 conv1d layers
+        in the TextCNN component.
+        embedded_input: Truth value. True, if the input has already been
+        embedded into a feature space default：False.
+        kmer: Integer. The window size of the very first average
+        pooling layer.
+        prior_avgpool: AveragePooling1D。The 1D maxpooling layer of
+        the downsampling component in the model.
+        conv1s: List. The conv1d layers that comprise the TextCNN component
+        in the model.
+        maxpools: List. The maxpooling layers in the TextCNN component.
     """
 
     def __init__(self,
@@ -47,29 +47,35 @@ class KmerTextCNN(Model):
                  ):
         """Initialize function of BLTCNN model
 
-            Initialize the BLTCNN object.
+        Initialize the BLTCNN object.
 
-            Params:
-               class_num: The number of classes in the classification problem.
-               maxlen: The maximum input length of the input sequence.
-               input_dim: Integer. Size of the vocabulary. When embedded_input=True,
-               it would be ignored.
-               embedding_dims: Integer. Dimension of the dense embedding.
-               lstm_units: Integer. The number of neurons in the hidden layer of the
-               LSTM block.
-               conv1d_filters: Integer. The number of filters in each filter size.
-               kernel_sizes: List, eg: [1,2,3]. The window size of 3 conv1d layers
-               in the TextCNN component.
-               kernel_regularizer: eg: tf.keras.regularizers.l2(0.001)
-               last_activation: The activation function used in the output layer.
-               embedded_input: Truth value. True, if the input has already been
-               embedded into a feature space default：False.
-               pre_avg_window: Integer. The window size of the very first average
-               pooling layer.
-            Returns:
-                None
-       """
-        super(KmerTextCNN, self).__init__()
+        Params:
+            class_num: The number of classes in the classification problem.
+            maxlen: The maximum input length of the input sequence.
+            input_dim: Integer. Size of the vocabulary. When embedded_input=True,
+            it would be ignored.
+            embedding_dims: Integer. Dimension of the dense embedding.
+            lstm_units: Integer. The number of neurons in the hidden layer of the
+            LSTM block.
+            conv1d_filters: Integer. The number of filters in each filter size.
+            kernel_sizes: List, eg: [1,2,3]. The window size of 3 conv1d layers
+            in the TextCNN component.
+            kernel_regularizer: eg: tf.keras.regularizers.l2(0.001)
+            last_activation: The activation function used in the output layer.
+            embedded_input: Truth value. True, if the input has already been
+            embedded into a feature space default：False.
+            pre_avg_window: Integer. The window size of the very first average
+            pooling layer.
+            bilstm_layers: List. The bilstm layers that comprise the BLSTM
+            component in the model.
+            prior_avgpool: AveragePooling1D。The 1D maxpooling layer of
+            the downsampling component in the model.
+            conv1s: List. The conv1d layers that comprise the TextCNN component
+            in the model.
+        Returns:
+            None
+        """
+        super(BLTCNN, self).__init__()
         self.class_num = class_num
         self.maxlen = maxlen
         self.embedding_dims = embedding_dims
@@ -143,8 +149,8 @@ class KmerTextCNN(Model):
     def build_graph(self, input_shape):
         """Call before running model.summary()
 
-            Call this function before running model.summary(), so that model.summary()
-            can work when model.fit() has not been run.
+        Call this function before running model.summary(), so that model.summary()
+        can work when model.fit() has not been run.
         """
         input_shape_nobatch = input_shape[1:]
         self.build(input_shape)
