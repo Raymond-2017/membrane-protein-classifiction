@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Time : 2021/8/4 17:08
 # @Author : Raymond
-# @File : se_text_cnn.py
+# @File : se_bltcnn.py
 # @Software: PyCharm
 
 import squeeze_excitation_layer as se
@@ -11,7 +11,7 @@ from tensorflow.keras.layers import Embedding, Conv1D, AveragePooling1D, Dense, 
 from tensorflow.keras import Model
 
 
-class KmerSETextCNN(Model):
+class SE_BLTCNN(Model):
     """SE-BLTCNN model
 
         Define the structure of the SE-BLTCNN model.
@@ -73,7 +73,7 @@ class KmerSETextCNN(Model):
                     None
            """
 
-        super(KmerSETextCNN, self).__init__()
+        super(SE_BLTCNN, self).__init__()
 
         self.class_num = class_num
         self.maxlen = maxlen
