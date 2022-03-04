@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# @Time : 2020/8/15 10:32
+# @Time : 2021/8/15 10:32
 # @Author : Raymond
-# @File : Squeeze_excitation_layer.py
+# @File : squeeze_excitation_layer.py
 # @Software: PyCharm
 
 import tensorflow as tf
@@ -9,7 +9,24 @@ import numpy as np
 
 
 class Squeeze_excitation_layer(tf.keras.Model):
+    """ Squeeze-and-Excitation block
+
+        Define the Squeeze and Excitation block, the channel attention mechanism
+        used in the SE-BLTCNN model.
+    """
     def __init__(self, filters, filters_sq):
+        """Initialize function
+
+            Initialize the SE layer object.
+
+            Params:
+                filters: Integer. The number of channels before dimensionality
+                reduction operation.
+                filters_sq: Integer. The number of channels after
+                dimensionality reduction operation.
+            Returns:
+                None
+        """
         # filters 降维前的通道数。  filters_sq 降维后的通道数。
         super().__init__()
         self.filter_sq = filters_sq

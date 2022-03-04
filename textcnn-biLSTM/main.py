@@ -13,6 +13,17 @@ import tensorflow as tf
 import random as rn
 
 def setup_seed(seed):
+    """Set a random seed
+
+    Set a random seed for model training, so that the eventual value of a
+    model's parameters can keep same when training from the scratch.
+
+    Args:
+        seed: An integer as a random seed.
+
+    Returns:
+        None
+    """
     rn.seed(seed)  # 为python设置随机种子
     np.random.seed(seed)  # 为numpy设置随机种子
     tf.random.set_seed(seed)  # tf cpu fix seed
@@ -20,7 +31,7 @@ def setup_seed(seed):
 
 setup_seed(0)
 # =============================================================
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 config=tf.compat.v1.ConfigProto()
 config.gpu_options.allow_growth = True
 config.gpu_options.per_process_gpu_memory_fraction = 0.8  # 占用GPU80%的显存
@@ -28,7 +39,6 @@ tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=config))
 
 from tensorflow.keras.callbacks import ReduceLROnPlateau
 from tensorflow.keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
-from tensorflow.keras.callbacks import EarlyStopping
 from text_cnn import KmerTextCNN
 
 from sklearn.metrics import classification_report
@@ -47,22 +57,58 @@ def checkout_dir(dir_path, do_delete=False):
         print(dir_path, 'make dir ok')
         os.makedirs(dir_path)
 
-'''
-    构建模型helper。帮助构建模型，定义和管理各种回调函数。    
-    :param maxlen: 文本最大长度
-    :param max_features: 词典大小
-    :param embedding_dims: embedding维度大小
-    :param kernel_sizes: 滑动卷积窗口大小的list, eg: [1,2,3]
-    :param kernel_regularizer: eg: tf.keras.regularizers.l2(0.001)
-    :param class_num: 类别个数。8种膜蛋白。 注意：一定要填对，不然会训练中会出现loss为NaN的情况!
-    :param embedded_input: 是否是已经嵌入过的输入数据。 default：False
-'''
 class ModelHepler:
-    def __init__(self, class_num, maxlen, max_features, embedding_dims, epochs, batch_size, embedded_input,
+    """Model constructing helper
+
+        Help contruct a model. It defines and manages a series of call-back functions.
+
+        Attributes:
+            class_num: The number of classes in the classification problem.
+            maxlen: The maximum input length of the input sequence.
+            input_dim: Integer. Size of the vocabulary. When embedded_input=True,
+            it would be ignored.
+            embedding_dims: Integer. Dimension of the dense embedding. When
+            embedded_input=True, it would be ignored.
+            epochs: Integer. Training epochs.
+            batch_size: Integer. the size of every batch when training the model.
+            pre_avg_window: Integer. The window size of the very first average
+            pooling layer.
+            lstm_units: Integer. The number of neurons in the hidden layer of the
+            LSTM block.
+            conv1d_filters: Integer. The number of filters in each filter size.
+            callback_list: List of `keras.callbacks.Callback` instances.
+            List of callbacks to apply during training.
+            embedded_input: Truth value. True, if the input has already been
+            embedded into a feature space default：False.
+    """
+    def __init__(self, class_num, maxlen, input_dim, embedding_dims, epochs, batch_size, embedded_input,
                  pre_avg_window, lstm_units, conv1d_filters):
+        """Model constructing helper
+
+            Help contruct a model. It defines and manages a series of call-back functions.
+
+            Args:
+                class_num: The number of classes in the classification problem.
+                maxlen: The maximum input length of the input sequence.
+                input_dim: Integer. Size of the vocabulary. When embedded_input=True,
+                it would be ignored.
+                embedding_dims: Integer. Dimension of the dense embedding. When
+                embedded_input=True, it would be ignored.
+                epochs: Integer. Training epochs.
+                batch_size: Integer. the size of every batch when training the model.
+                embedded_input: Truth value. True, if the input has already been
+                embedded into a feature space default：False.
+                pre_avg_window: Integer. The window size of the very first average
+                pooling layer.
+                lstm_units: Integer. The number of neurons in the hidden layer of the
+                LSTM block.
+                conv1d_filters: Integer. The number of filters in each filter size.
+            Returns:
+                None
+        """
         self.class_num = class_num
         self.maxlen = maxlen
-        self.max_features = max_features
+        self.max_features = input_dim
         self.embedding_dims = embedding_dims
         self.pre_avg_window = pre_avg_window
         self.lstm_units=lstm_units
@@ -75,8 +121,12 @@ class ModelHepler:
         self.create_model()
 
     def create_model(self):
+        """Create and configure a BLTCNN model
+
+            Create a BLTCNN model and configure its optimizer.
+        """
         model = KmerTextCNN(maxlen=self.maxlen,
-                            max_features=self.max_features,
+                            input_dim=self.max_features,
                             embedding_dims=self.embedding_dims,
                             class_num=self.class_num,
                             lstm_units=self.lstm_units,
@@ -134,6 +184,19 @@ class ModelHepler:
         self.callback_list = callback_list
 
     def fit(self, x_train, y_train, x_val, y_val):
+        """Model training
+
+        Train the model with given sample set.
+
+        Args:
+            x_train: ndarray. The input data in the training set.
+            y_train: ndarray. The target data in the training set.
+            x_val: ndarray. The input data in the validation set.
+            y_val: ndarray. The target data in the validation set.
+
+        Returns:
+            None
+        """
         print('Train...')
         self.model.fit(x_train, y_train,
                        batch_size=self.batch_size,
@@ -144,6 +207,16 @@ class ModelHepler:
         # at the end of each epoch.
 
     def load_model(self, checkpoint_path):
+        """Load model
+
+        Load the model from the latest checkpoint.
+
+        Args:
+           checkpoint_path: The directory where the checkpoint files are stored.
+
+        Returns:
+           None
+        """
         checkpoint_dir = os.path.dirname(checkpoint_path)
         latest = tf.train.latest_checkpoint(checkpoint_dir) # 加载最新保存的模型
         print('restore model name is : ', latest)
@@ -158,7 +231,7 @@ class_num = 8
 maxlen = 1024
 embedding_dims = 20  # embedded_input为True时，不发挥作用。
 epochs = 30
-max_features = 5000  # embedded_input为True时，不发挥作用。
+input_dim = 5000  # embedded_input为True时，不发挥作用。
 pre_avg_window = 12
 embedded_input = True
 kernel_sizes = [3, 4, 5]
@@ -215,8 +288,9 @@ y_test = np.load('..\\data\\Y_test.npy')
 
 
 def model_selection():
-    """
-    We search for optimal hyperparameters for model using grid search.
+    """A grid-search for optimal hyperparameters.
+
+    Grid search optimal hyperparameters for the model.
     """
     i = 0
     for batch_size in batch_sizes:
@@ -245,7 +319,7 @@ def model_selection():
                 # ++++++++++++++++++++++++++++++++++++
                 model_hepler = ModelHepler(class_num=class_num,
                                            maxlen=maxlen,
-                                           max_features=max_features,
+                                           input_dim=input_dim,
                                            embedding_dims=embedding_dims,
                                            epochs=epochs,
                                            batch_size=batch_size,
@@ -318,7 +392,7 @@ for batch_size in batch_sizes:
             # 重新评估模型
             model_hepler = ModelHepler(class_num=class_num,
                                        maxlen=maxlen,
-                                       max_features=max_features,
+                                       input_dim=input_dim,
                                        embedding_dims=embedding_dims,
                                        epochs=epochs,
                                        batch_size=batch_size,
